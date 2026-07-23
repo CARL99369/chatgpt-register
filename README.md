@@ -4,14 +4,6 @@
 
 ---
 
-🌐 **生图站** [vividai.run](https://vividai.run) &nbsp;|&nbsp;
-👥 **QQ 交流群** [1106849765](https://qm.qq.com/q/1106849765) &nbsp;|&nbsp;
-🐧 **QQ** 1114639355 &nbsp;|&nbsp;
-🛒 **小店** [pay.ldxp.cn/shop/chiyi](https://pay.ldxp.cn/shop/chiyi) &nbsp;|&nbsp;
-✉️ **邮箱** [vividairun@gmail.com](mailto:vividairun@gmail.com)
-
----
-
 ## ✨ 核心优势
 
 | 🚀 30 秒极速注册 | ✅ 百分百成功率 | 🔁 母号裂变子号 |
