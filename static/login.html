@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 · ChatGPT 注册管理</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-body">
+<div class="login-wrap">
+  <div class="login-card px-panel">
+    <div class="login-head">
+      <div class="login-logo">C</div>
+      <div>
+        <div class="login-title">ChatGPT 注册管理系统</div>
+        <div class="login-desc">请输入访问密码登录</div>
+      </div>
+    </div>
+    <div class="login-form">
+      <label class="login-label" for="lg-pass">密码</label>
+      <input id="lg-pass" class="px-input login-input" type="password" placeholder="请输入密码" autocomplete="current-password" autofocus>
+      <button class="login-btn" onclick="doLogin()">登录</button>
+    </div>
+  </div>
+  <div class="login-copyright">Copyright © 2026 ChatGPT 注册管理</div>
+</div>
+<div id="toast" class="toast" style="display:none"></div>
+<script src="/static/layout.js"></script>
+<script>
+if (getToken()) location.href = '/dashboard';
+
+async function doLogin() {
+  const password = document.getElementById('lg-pass').value;
+  if (!password) return toast('请输入密码', true);
+  const r = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) return toast(d.error || '登录失败', true);
+  setToken(d.token);
+  location.href = '/dashboard';
+}
+
+document.getElementById('lg-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>

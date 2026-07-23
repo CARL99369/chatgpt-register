@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>系统设置 · ChatGPT 注册管理</title>
+<link rel="stylesheet" href="/static/style.css?v=8">
+</head>
+<body data-page="settings">
+<div class="layout">
+  <main class="main">
+    <h1 class="page-title">系统设置</h1>
+    <p class="page-sub">配置注册规则、代理与账户安全</p>
+
+    <div class="settings-grid">
+      <div class="px-panel settings-card">
+        <div class="settings-head">
+          <span class="settings-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg>
+          </span>
+          <div>
+            <h2>基本设置</h2>
+            <p>注册并发控制</p>
+          </div>
+        </div>
+        <div class="field">
+          <label>最大并发数</label>
+          <span class="field-hint">注册时同时执行的任务数上限</span>
+          <div class="input-suffix">
+            <input id="set-max-concurrency" class="px-input" type="number" min="1" max="100" placeholder="默认 10">
+            <span class="suffix">个</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>裂变数量</label>
+          <span class="field-hint">每个账号最多可继续裂变的次数</span>
+          <div class="input-suffix">
+            <input id="set-fission-count" class="px-input" type="number" min="1" max="100" placeholder="默认 5">
+            <span class="suffix">次</span>
+          </div>
+        </div>
+        <div class="settings-foot">
+          <button class="px-btn primary" onclick="saveSettings()">保存设置</button>
+        </div>
+      </div>
+
+      <div class="px-panel settings-card">
+        <div class="settings-head">
+          <span class="settings-icon violet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h.01M10 12h.01M14 12h4"/></svg>
+          </span>
+          <div>
+            <h2>代理配置</h2>
+            <p>注册时通过代理访问，降低风控</p>
+          </div>
+        </div>
+        <label class="switch-row">
+          <input id="set-proxy-enabled" type="checkbox">
+          <span class="switch-ui"></span>
+          <span class="switch-label">启用代理</span>
+        </label>
+        <div class="field">
+          <div class="field-label-row">
+            <label>代理列表</label>
+            <span id="proxy-count" class="count-badge">识别到 0 个代理</span>
+          </div>
+          <span class="field-hint">每行一个，支持 http(s)://user:pass@host:port、socks5://host:port、host:port:user:pass</span>
+          <textarea id="set-proxy-list" class="px-input proxy-textarea" rows="5" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" oninput="updateProxyCount()" placeholder="http://user:pass@1.2.3.4:8080&#10;socks5://1.2.3.4:1080&#10;1.2.3.4:8080:user:pass"></textarea>
+        </div>
+        <div id="proxy-test-result" class="proxy-result" style="display:none"></div>
+        <div class="settings-foot">
+          <button id="proxy-test-btn" class="px-btn ghost" onclick="testProxy()">测试代理</button>
+          <button class="px-btn primary" onclick="saveProxy()">保存代理</button>
+        </div>
+      </div>
+
+      <div class="px-panel settings-card">
+        <div class="settings-head">
+          <span class="settings-icon amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <div>
+            <h2>修改密码</h2>
+            <p>修改后旧登录会立即失效</p>
+          </div>
+        </div>
+        <div class="field">
+          <label>原密码</label>
+          <input id="pw-old" class="px-input" type="password" autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label>新密码</label>
+          <span class="field-hint">长度需大于 6 位</span>
+          <input id="pw-new" class="px-input" type="password" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label>确认新密码</label>
+          <input id="pw-new2" class="px-input" type="password" autocomplete="new-password">
+        </div>
+        <div class="settings-foot">
+          <button class="px-btn primary" onclick="changePassword()">修改密码</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast" class="toast" style="display:none"></div>
+<script src="/static/layout.js"></script>
+<script>
+async function loadSettings() {
+  const r = await api('/api/settings');
+  const d = await r.json();
+  document.getElementById('set-max-concurrency').value = d.max_concurrency || '10';
+  document.getElementById('set-fission-count').value = d.fission_count || '5';
+  document.getElementById('set-proxy-enabled').checked = d.proxy_enabled === '1';
+  document.getElementById('set-proxy-list').value = d.proxy_list || '';
+  updateProxyCount();
+}
+
+function proxyLines() {
+  return document.getElementById('set-proxy-list').value
+    .split('\n').map(s => s.trim()).filter(Boolean);
+}
+
+function firstProxy() {
+  return proxyLines()[0] || '';
+}
+
+function updateProxyCount() {
+  document.getElementById('proxy-count').textContent = '识别到 ' + proxyLines().length + ' 个代理';
+}
+
+async function testProxy() {
+  const proxy = firstProxy();
+  const box = document.getElementById('proxy-test-result');
+  const btn = document.getElementById('proxy-test-btn');
+  if (!proxy) { box.style.display = 'none'; return toast('请先填写代理', true); }
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = '测试中…';
+  box.style.display = 'flex';
+  box.className = 'proxy-result testing';
+  box.innerHTML = '<span class="spinner"></span> 正在测试第一个代理…';
+  try {
+    const r = await api('/api/proxy/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ proxy }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.ok) {
+      box.className = 'proxy-result ok';
+      box.innerHTML = '✓ 代理可用 · 出口 IP <b>' + (d.ip || '未知') + '</b> · ' + (d.ms || 0) + ' ms';
+    } else {
+      box.className = 'proxy-result fail';
+      box.textContent = '✗ 代理不可用：' + (d.error || '连接失败');
+    }
+  } catch (e) {
+    box.className = 'proxy-result fail';
+    box.textContent = '✗ 测试失败：' + e;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+}
+
+async function saveProxy() {
+  const body = {
+    proxy_enabled: document.getElementById('set-proxy-enabled').checked ? '1' : '0',
+    proxy_list: document.getElementById('set-proxy-list').value.trim(),
+  };
+  const r = await api('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) return toast('保存失败', true);
+  toast('代理配置已保存');
+}
+
+async function saveSettings() {
+  const body = {
+    max_concurrency: document.getElementById('set-max-concurrency').value.trim(),
+    fission_count: document.getElementById('set-fission-count').value.trim(),
+  };
+  const r = await api('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) return toast('保存失败', true);
+  toast('设置已保存');
+}
+
+async function changePassword() {
+  const oldPass = document.getElementById('pw-old').value;
+  const newPass = document.getElementById('pw-new').value;
+  const newPass2 = document.getElementById('pw-new2').value;
+  if (!oldPass) return toast('请输入原密码', true);
+  if (newPass.length <= 6) return toast('新密码长度必须大于 6 位', true);
+  if (newPass !== newPass2) return toast('两次输入的新密码不一致', true);
+  const r = await api('/api/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ old_password: oldPass, new_password: newPass }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) return toast(d.error || '修改失败', true);
+  if (d.token) setToken(d.token); // 改密后旧 token 作废，换上新 token
+  document.getElementById('pw-old').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-new2').value = '';
+  toast('密码已修改');
+}
+
+loadSettings();
+</script>
+</body>
+</html>
